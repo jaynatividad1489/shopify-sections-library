@@ -1,0 +1,291 @@
+{% comment %}
+  Testimonials Slider Section
+  - Displays customer reviews in a responsive slider
+  - Each block = one testimonial (star rating, quote, author, role)
+  - Pure CSS sliding animation — no external libraries needed
+  - Fully configurable via Shopify Theme Editor
+{% endcomment %}
+
+<section
+  id="testimonials-{{ section.id }}"
+  class="testimonials"
+  style="background-color: {{ section.settings.background_color }};"
+>
+  <div class="testimonials__container">
+
+    {%- if section.settings.heading != blank -%}
+      <div class="testimonials__header">
+        <h2
+          class="testimonials__heading"
+          style="color: {{ section.settings.heading_color }};"
+        >
+          {{ section.settings.heading }}
+        </h2>
+        {%- if section.settings.subheading != blank -%}
+          <p class="testimonials__subheading">{{ section.settings.subheading }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      <div class="testimonials__slider" id="testimonials-slider-{{ section.id }}">
+        <div class="testimonials__track">
+          {%- for block in section.blocks -%}
+            <div
+              class="testimonials__slide"
+              {{ block.shopify_attributes }}
+            >
+              <div class="testimonials__card">
+
+                {%- comment %} Star Rating {%- endcomment %}
+                <div class="testimonials__stars">
+                  {%- assign rating = block.settings.rating -%}
+                  {%- for i in (1..5) -%}
+                    <span class="testimonials__star {% if i <= rating %}testimonials__star--filled{% endif %}">★</span>
+                  {%- endfor -%}
+                </div>
+
+                {%- comment %} Quote {%- endcomment %}
+                {%- if block.settings.quote != blank -%}
+                  <blockquote class="testimonials__quote">
+                    "{{ block.settings.quote }}"
+                  </blockquote>
+                {%- endif -%}
+
+                {%- comment %} Author {%- endcomment %}
+                <div class="testimonials__author">
+                  {%- if block.settings.author_image != blank -%}
+                    <img
+                      src="{{ block.settings.author_image | image_url: width: 80 }}"
+                      alt="{{ block.settings.author_name }}"
+                      class="testimonials__author-image"
+                      width="40"
+                      height="40"
+                      loading="lazy"
+                    >
+                  {%- else -%}
+                    <div class="testimonials__author-avatar">
+                      {{ block.settings.author_name | slice: 0 }}
+                    </div>
+                  {%- endif -%}
+
+                  <div class="testimonials__author-info">
+                    <span class="testimonials__author-name">{{ block.settings.author_name }}</span>
+                    {%- if block.settings.author_role != blank -%}
+                      <span class="testimonials__author-role">{{ block.settings.author_role }}</span>
+                    {%- endif -%}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+
+        {%- comment %} Navigation Dots {%- endcomment %}
+        {%- if section.blocks.size > 1 -%}
+          <div class="testimonials__dots">
+            {%- for block in section.blocks -%}
+              <button
+                class="testimonials__dot {% if forloop.first %}testimonials__dot--active{% endif %}"
+                data-index="{{ forloop.index0 }}"
+                aria-label="Go to testimonial {{ forloop.index }}"
+              ></button>
+            {%- endfor -%}
+          </div>
+
+          <div class="testimonials__arrows">
+            <button class="testimonials__arrow testimonials__arrow--prev" aria-label="Previous">&#8592;</button>
+            <button class="testimonials__arrow testimonials__arrow--next" aria-label="Next">&#8594;</button>
+          </div>
+        {%- endif -%}
+
+      </div>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<script>
+  (function() {
+    const slider = document.getElementById('testimonials-slider-{{ section.id }}');
+    if (!slider) return;
+
+    const track = slider.querySelector('.testimonials__track');
+    const slides = slider.querySelectorAll('.testimonials__slide');
+    const dots = slider.querySelectorAll('.testimonials__dot');
+    const prevBtn = slider.querySelector('.testimonials__arrow--prev');
+    const nextBtn = slider.querySelector('.testimonials__arrow--next');
+
+    let current = 0;
+    let autoplayTimer;
+
+    function goTo(index) {
+      slides[current].classList.remove('active');
+      dots[current] && dots[current].classList.remove('testimonials__dot--active');
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add('active');
+      dots[current] && dots[current].classList.add('testimonials__dot--active');
+      track.style.transform = `translateX(-${current * 100}%)`;
+    }
+
+    // Initialize first slide
+    slides[0].classList.add('active');
+
+    // Dot navigation
+    dots.forEach((dot, i) => dot.addEventListener('click', () => { goTo(i); resetAutoplay(); }));
+
+    // Arrow navigation
+    prevBtn && prevBtn.addEventListener('click', () => { goTo(current - 1); resetAutoplay(); });
+    nextBtn && nextBtn.addEventListener('click', () => { goTo(current + 1); resetAutoplay(); });
+
+    // Autoplay
+    function startAutoplay() {
+      autoplayTimer = setInterval(() => goTo(current + 1), {{ section.settings.autoplay_speed | times: 1000 }});
+    }
+
+    function resetAutoplay() {
+      clearInterval(autoplayTimer);
+      {% if section.settings.autoplay %}startAutoplay();{% endif %}
+    }
+
+    {% if section.settings.autoplay %}startAutoplay();{% endif %}
+
+    // Pause on hover
+    slider.addEventListener('mouseenter', () => clearInterval(autoplayTimer));
+    slider.addEventListener('mouseleave', () => { {% if section.settings.autoplay %}startAutoplay();{% endif %} });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Testimonials Slider",
+  "tag": "section",
+  "class": "testimonials-section",
+  "max_blocks": 12,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "What Our Customers Say"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Real reviews from real customers"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading Color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#f9f9f9"
+    },
+    {
+      "type": "header",
+      "content": "Autoplay"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Enable Autoplay",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "label": "Autoplay Speed (seconds)",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "default": 4
+    }
+  ],
+  "blocks": [
+    {
+      "type": "testimonial",
+      "name": "Testimonial",
+      "settings": [
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Star Rating",
+          "min": 1,
+          "max": 5,
+          "step": 1,
+          "default": 5
+        },
+        {
+          "type": "textarea",
+          "id": "quote",
+          "label": "Quote",
+          "default": "This product completely exceeded my expectations. Absolutely love it!"
+        },
+        {
+          "type": "image_picker",
+          "id": "author_image",
+          "label": "Author Photo (optional)"
+        },
+        {
+          "type": "text",
+          "id": "author_name",
+          "label": "Author Name",
+          "default": "Jane D."
+        },
+        {
+          "type": "text",
+          "id": "author_role",
+          "label": "Author Role / Location",
+          "default": "Verified Buyer"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Testimonials Slider",
+      "category": "Social proof",
+      "blocks": [
+        {
+          "type": "testimonial",
+          "settings": {
+            "author_name": "Sarah M.",
+            "author_role": "Verified Buyer",
+            "quote": "Absolutely love the quality! Will definitely be ordering again.",
+            "rating": 5
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "author_name": "James R.",
+            "author_role": "Verified Buyer",
+            "quote": "Fast shipping and the product looks even better in person!",
+            "rating": 5
+          }
+        },
+        {
+          "type": "testimonial",
+          "settings": {
+            "author_name": "Priya K.",
+            "author_role": "Verified Buyer",
+            "quote": "Great customer service and a beautiful product. Highly recommend.",
+            "rating": 4
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
