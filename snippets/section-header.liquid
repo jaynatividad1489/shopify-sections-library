@@ -1,0 +1,27 @@
+{% comment %}
+  Reusable Section Header Snippet
+  Usage:
+    {% render 'section-header',
+      heading: section.settings.heading,
+      subheading: section.settings.subheading,
+      heading_color: section.settings.heading_color,
+      alignment: section.settings.header_alignment
+    %}
+{% endcomment %}
+
+{%- if heading != blank or subheading != blank -%}
+  <div class="section-header section-header--{{ alignment | default: 'center' }}">
+    {%- if heading != blank -%}
+      <h2
+        class="section-header__heading"
+        style="{% if heading_color != blank %}color: {{ heading_color }};{% endif %}"
+      >
+        {{ heading }}
+      </h2>
+    {%- endif -%}
+
+    {%- if subheading != blank -%}
+      <p class="section-header__subheading">{{ subheading }}</p>
+    {%- endif -%}
+  </div>
+{%- endif -%}
