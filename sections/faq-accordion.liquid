@@ -1,0 +1,245 @@
+{% comment %}
+  FAQ Accordion Section
+  - Expandable/collapsible FAQ items
+  - Smooth CSS transitions — no jQuery needed
+  - Accessible: keyboard navigable, ARIA attributes
+  - Supports multiple open at once or single-open mode
+  - Each block = one FAQ item (question + answer)
+{% endcomment %}
+
+<section
+  id="faq-{{ section.id }}"
+  class="faq"
+  style="background-color: {{ section.settings.background_color }};"
+>
+  <div class="faq__container">
+
+    {%- if section.settings.heading != blank -%}
+      <div class="faq__header">
+        <h2
+          class="faq__heading"
+          style="color: {{ section.settings.heading_color }};"
+        >
+          {{ section.settings.heading }}
+        </h2>
+        {%- if section.settings.subheading != blank -%}
+          <p class="faq__subheading">{{ section.settings.subheading }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.blocks.size > 0 -%}
+      <div
+        class="faq__list"
+        data-single-open="{{ section.settings.single_open }}"
+      >
+        {%- for block in section.blocks -%}
+          <div
+            class="faq__item"
+            {{ block.shopify_attributes }}
+          >
+            <button
+              class="faq__question"
+              aria-expanded="false"
+              aria-controls="faq-answer-{{ block.id }}"
+              id="faq-question-{{ block.id }}"
+            >
+              <span class="faq__question-text">{{ block.settings.question }}</span>
+              <span class="faq__icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M2 5L8 11L14 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </button>
+
+            <div
+              class="faq__answer"
+              id="faq-answer-{{ block.id }}"
+              role="region"
+              aria-labelledby="faq-question-{{ block.id }}"
+              hidden
+            >
+              <div class="faq__answer-inner">
+                {{ block.settings.answer }}
+              </div>
+            </div>
+          </div>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+
+    {%- if section.settings.contact_text != blank -%}
+      <div class="faq__contact">
+        <p>{{ section.settings.contact_text }}
+          {%- if section.settings.contact_url != blank -%}
+            <a href="{{ section.settings.contact_url }}">{{ section.settings.contact_label }}</a>
+          {%- endif -%}
+        </p>
+      </div>
+    {%- endif -%}
+
+  </div>
+</section>
+
+<script>
+  (function() {
+    const faqList = document.querySelector('#faq-{{ section.id }} .faq__list');
+    if (!faqList) return;
+
+    const singleOpen = faqList.dataset.singleOpen === 'true';
+
+    faqList.querySelectorAll('.faq__question').forEach(function(button) {
+      button.addEventListener('click', function() {
+        const isOpen = this.getAttribute('aria-expanded') === 'true';
+        const answer = document.getElementById(this.getAttribute('aria-controls'));
+
+        // Close all if single-open mode
+        if (singleOpen) {
+          faqList.querySelectorAll('.faq__question').forEach(function(btn) {
+            btn.setAttribute('aria-expanded', 'false');
+            btn.closest('.faq__item').classList.remove('faq__item--open');
+            const ans = document.getElementById(btn.getAttribute('aria-controls'));
+            if (ans) ans.hidden = true;
+          });
+        }
+
+        // Toggle clicked item
+        if (!isOpen) {
+          this.setAttribute('aria-expanded', 'true');
+          this.closest('.faq__item').classList.add('faq__item--open');
+          answer.hidden = false;
+        } else {
+          this.setAttribute('aria-expanded', 'false');
+          this.closest('.faq__item').classList.remove('faq__item--open');
+          answer.hidden = true;
+        }
+      });
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "FAQ Accordion",
+  "tag": "section",
+  "class": "faq-section",
+  "max_blocks": 20,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Header"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Frequently Asked Questions"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Got questions? We've got answers."
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading Color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Behavior"
+    },
+    {
+      "type": "checkbox",
+      "id": "single_open",
+      "label": "Only one item open at a time",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Contact Prompt (optional)"
+    },
+    {
+      "type": "text",
+      "id": "contact_text",
+      "label": "Contact Prompt Text",
+      "default": "Still have questions?"
+    },
+    {
+      "type": "text",
+      "id": "contact_label",
+      "label": "Contact Link Label",
+      "default": "Contact us"
+    },
+    {
+      "type": "url",
+      "id": "contact_url",
+      "label": "Contact Link URL"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq_item",
+      "name": "FAQ Item",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "What is your return policy?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>We offer a 30-day return policy on all unused items in their original packaging. Simply contact our support team and we'll guide you through the process.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQ Accordion",
+      "category": "Content",
+      "blocks": [
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "What is your return policy?",
+            "answer": "<p>We offer a 30-day return policy on all unused items in their original packaging.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "How long does shipping take?",
+            "answer": "<p>Standard shipping takes 5–7 business days. Express options are available at checkout.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "Do you ship internationally?",
+            "answer": "<p>Yes! We ship to over 50 countries worldwide. Shipping rates and times vary by location.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "How do I track my order?",
+            "answer": "<p>Once your order ships, you'll receive a tracking number via email. You can use it on our Track Order page.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
